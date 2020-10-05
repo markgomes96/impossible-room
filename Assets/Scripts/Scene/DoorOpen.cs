@@ -7,12 +7,17 @@ public class DoorOpen : MonoBehaviour
     public enum RotationDirection { Negative, Positve};
     public enum RotationAxis { XAxis, YAxis, ZAxis};
 
+    [Header("References")]
     public DoorOpen linkedDoor;
 
+    [Header("Settings")]
     public RotationDirection rotationDirection;
     public RotationAxis rotationAxis;
     public float maxRotAngle = 90f;
     public float rotationSpeed = 9f;
+
+    [Header("Audio")]
+    public AudioSource doorOpenAudio;
 
     Transform doorT;
     float rotScal;
@@ -87,6 +92,8 @@ public class DoorOpen : MonoBehaviour
 
     IEnumerator OpenDoor()
     {
+        doorOpenAudio.PlayOneShot(doorOpenAudio.clip, 0.7f);
+
         while (angleCount < maxRotAngle)
         {
             float rotDelta = rotationSpeed * rotScal * Time.deltaTime;

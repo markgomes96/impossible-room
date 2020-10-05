@@ -7,7 +7,7 @@ public class MouseLook : MonoBehaviour
     [Header("References")]
     public Transform playerBody;
     [Header("Settings")]
-    public float mouseSensitivity = 100f;
+    public float mouseSensitivity = 0.2f;
 
     float xRotation = 0f;
 

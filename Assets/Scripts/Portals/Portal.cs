@@ -1,9 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Data.Common;
-using UnityEditor;
-using UnityEditor.Rendering;
-using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -42,6 +39,53 @@ public class Portal : MonoBehaviour
         HandleTravellers();
     }
 
+    void OnTriggerEnter(Collider other)
+    {
+        var traveler = other.GetComponent<PortalTraveler>();
+        if (traveler)
+        {
+            //Debug.Log("Travel enters portal trigger");
+            //Debug.Break();
+
+            OnTravelerEnterPortal(traveler);
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        var traveler = other.GetComponent<PortalTraveler>();
+        if (traveler && trackedTravelers.Contains(traveler))
+        {
+            traveler.ExitPortalThreshold();
+            trackedTravelers.Remove(traveler);
+
+            //Debug.Log("Traveler exits portal trigger");
+            //Debug.Break();
+        }
+    }
+
+    void OnTravelerEnterPortal(PortalTraveler traveler)
+    {
+        // Check if traveler is already being tracked
+        if (!trackedTravelers.Contains(traveler))
+        {
+            traveler.EnterPortalThreshold();
+            // if traveler is viewer use camera transform
+            if (traveler.isViewer)
+            {
+                traveler.previousOffsetFromPortal = playerCam.transform.position - transform.position;
+            }
+            else
+            {
+                traveler.previousOffsetFromPortal = traveler.transform.position - transform.position;
+            }
+            trackedTravelers.Add(traveler);
+
+            //Debug.Break();
+            //Debug.Log("Travel added to portal list");
+        }
+    }
+
     void HandleTravellers()
     {
         for (int i = 0; i < trackedTravelers.Count; i++)
@@ -63,11 +107,13 @@ public class Portal : MonoBehaviour
             {
                 var positionOld = travelerT.position;
                 var rotOld = travelerT.rotation;
-                
 
                 traveler.Teleport(transform, linkedPortal.transform, m.GetColumn(3), m.rotation);
                 traveler.graphicsClone.transform.SetPositionAndRotation(positionOld, rotOld);
-                
+
+                //Debug.Log("Travel teleports");
+                //Debug.Break();
+
                 linkedPortal.OnTravelerEnterPortal(traveler);
                 trackedTravelers.RemoveAt(i);
                 i--;
@@ -123,8 +169,26 @@ public class Portal : MonoBehaviour
         portalCam.transform.SetPositionAndRotation(m.GetColumn(3), m.rotation);
 
         // Handle clipping
+        /*
+        if (!HasNonViewerTraveler())
+        {
+            SetNearClipPlane();
+        }
+        */
         SetNearClipPlane();
         //HandleClipping
+    }
+
+    bool HasNonViewerTraveler()
+    {
+        foreach (PortalTraveler traveler in trackedTravelers)
+        {
+            if (!traveler.isViewer)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* Attemp at recursive rendering with coroutines
@@ -269,44 +333,6 @@ public class Portal : MonoBehaviour
         else
         {
             portalCam.projectionMatrix = playerCam.projectionMatrix;
-        }
-    }
-
-    void OnTravelerEnterPortal(PortalTraveler traveler)
-    {
-        // Check if traveler is already being tracked
-        if (!trackedTravelers.Contains(traveler))
-        {
-            traveler.EnterPortalThreshold();
-            // if traveler is viewer use camera transform
-            if (traveler.isViewer)
-            {
-                traveler.previousOffsetFromPortal = playerCam.transform.position - transform.position;
-            }
-            else
-            {
-                traveler.previousOffsetFromPortal = traveler.transform.position - transform.position;
-            }
-            trackedTravelers.Add(traveler);
-        }
-    }
-
-    void OnTriggerEnter(Collider other)
-    {
-        var traveler = other.GetComponent<PortalTraveler>();
-        if (traveler)
-        {
-            OnTravelerEnterPortal(traveler);
-        }
-    }
-
-    void OnTriggerExit(Collider other)
-    {
-        var traveler = other.GetComponent<PortalTraveler>();
-        if (traveler && trackedTravelers.Contains(traveler))
-        {
-            traveler.ExitPortalThreshold();
-            trackedTravelers.Remove(traveler);
         }
     }
 

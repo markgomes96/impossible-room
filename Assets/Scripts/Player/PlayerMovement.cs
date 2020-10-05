@@ -20,19 +20,58 @@ public class PlayerMovement : PortalTraveler
     public float jumpHeight = 3.0f;
     public float maxFallSpeed = 9.0f;
 
+    [Header("Audio")]
+    public AudioSource walkAudio;
+    public AudioSource landAudio;
+
     Vector3 velocity;
     float currentSpeed;
     bool isGrounded;
+    bool freezePlayer;
+    bool wasGrounded;
 
-    void Start()
+    void Awake()
     {
         characterController = GetComponent<CharacterController>();
+        freezePlayer = false;
+        wasGrounded = true;
     }
 
     void Update()
     {
-        CheckInputs();
-        HandleMovement();
+        if (!freezePlayer)
+        {
+            CheckInputs();
+            HandleMovement();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            BroadcastButtonPress((KeyCode.Escape));
+        }
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            BroadcastButtonPress((KeyCode.Tab));
+        }
+    }
+
+    public void EnablePlayerControl()
+    {
+        freezePlayer = false;
+        transform.GetComponentInChildren<MouseLook>().enabled = true;
+        // Hide and lock cursor to center of screen
+        Cursor.lockState = CursorLockMode.Locked;
+    }
+
+    public void DisablePlayerControl()
+    {
+        freezePlayer = true;
+        transform.GetComponentInChildren<MouseLook>().enabled = false;
+    }
+
+    public void FreezePlayer()
+    {
+        freezePlayer = true;
     }
 
     void CheckInputs()
@@ -53,7 +92,7 @@ public class PlayerMovement : PortalTraveler
     public delegate void ButtonPressed(KeyCode keyCode);
     public event ButtonPressed OnButtonPress;
 
-    public void BroadcastButtonPress(KeyCode keyCode)
+    void BroadcastButtonPress(KeyCode keyCode)
     {
         if (OnButtonPress != null)
             OnButtonPress(keyCode);
@@ -62,16 +101,30 @@ public class PlayerMovement : PortalTraveler
     public delegate void MouseButtonPressed(int mouseButton);
     public event MouseButtonPressed OnMouseButtonPressed;
 
-    public void BroadcastMouseButtonPress(int mouseButton)
+    void BroadcastMouseButtonPress(int mouseButton)
     {
         if (OnMouseButtonPressed != null)
             OnMouseButtonPressed(mouseButton);
+    }
+
+    public delegate void NextStage();
+    public event NextStage OnNextStage;
+
+    public void BroadcastNextStage()
+    {
+        if (OnNextStage != null)
+            OnNextStage();
     }
 
     void HandleMovement()
     {
         // check if character is grounded at start of frame
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
+        if (!wasGrounded && isGrounded)
+        {
+            landAudio.PlayOneShot(landAudio.clip, 0.7f);
+        }
 
         // Zero out vertical velocity when grounded
         if (isGrounded && velocity.y < 0f)
@@ -117,8 +170,22 @@ public class PlayerMovement : PortalTraveler
         // Apply velocity to move vector
         moveVect.y = velocity.y;
 
+        // Check if grounded and moving horizontally
+        Vector2 horizVect = new Vector2(moveVect.x, moveVect.z);
+        if (isGrounded && horizVect.sqrMagnitude > 0.001)
+        {
+            if (!walkAudio.isPlaying)
+                walkAudio.Play();
+        }
+        else
+        {
+            walkAudio.Stop();
+        }    
+
         // Move player by move vector
         characterController.Move(moveVect * Time.deltaTime);
+
+        wasGrounded = isGrounded;
     }
 
     public override void Teleport(Transform fromPortal, Transform toPortal, Vector3 pos, Quaternion rot)
