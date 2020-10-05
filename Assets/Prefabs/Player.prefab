@@ -1377,7 +1377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerBody: {fileID: 8463412429957117184}
-  mouseSensitivity: 800
+  mouseSensitivity: 100
 --- !u!114 &1541921726
 MonoBehaviour:
   m_ObjectHideFlags: 0

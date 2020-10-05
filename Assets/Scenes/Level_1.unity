@@ -8866,10 +8866,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 8463412430893095884, guid: 0681b56b3282456488c401601851e2ec, type: 3}
-      propertyPath: mouseSensitivity
-      value: 100
-      objectReference: {fileID: 0}
     - target: {fileID: 8463412430893095887, guid: 0681b56b3282456488c401601851e2ec, type: 3}
       propertyPath: m_Cameras.Array.data[0]
       value: 
